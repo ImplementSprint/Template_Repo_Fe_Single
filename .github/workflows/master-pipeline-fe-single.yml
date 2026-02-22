@@ -1,0 +1,44 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  CALLER: Master Pipeline Orchestrator (FE Single)              ║
+# ║  Calls the reusable master pipeline from CICD-Fe_Single-test   ║
+# ║                                                                  ║
+# ║  TODO: Replace OWNER/CICD-Fe_Single-test with your actual       ║
+# ║        GitHub owner/org and repo name                            ║
+# ╚══════════════════════════════════════════════════════════════════╝
+name: "Master Pipeline Orchestrator — FE Single"
+
+on:
+  push:
+    branches: [test, uat, main]
+  pull_request:
+    branches: [test, uat, main]
+  workflow_dispatch:
+    inputs:
+      run_deploy:
+        description: "Run deploy jobs"
+        type: boolean
+        default: true
+      run_promotion:
+        description: "Run PR promotion jobs"
+        type: boolean
+        default: true
+      dry_run:
+        description: "Preview-only mode (skip deploy/tag push, print PR body)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  pipeline:
+    # TODO: Replace OWNER/CICD-Fe_Single-test with your actual GitHub owner/org and repo name
+    uses: OWNER/CICD-Fe_Single-test/.github/workflows/master-pipeline-fe-single.yml@main
+    with:
+      run_deploy: ${{ inputs.run_deploy || true }}
+      run_promotion: ${{ inputs.run_promotion || true }}
+      dry_run: ${{ inputs.dry_run || false }}
+    secrets: inherit
