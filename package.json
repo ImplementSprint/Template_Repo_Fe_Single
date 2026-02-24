@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:e2e": "node tests/e2e/runner.js"
+    "test:e2e": "node tests/e2e/runner.mjs"
   },
   "dependencies": {
     "next": "16.1.6",
