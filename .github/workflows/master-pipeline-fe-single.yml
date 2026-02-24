@@ -109,7 +109,7 @@ jobs:
     name: "${{ needs.systems-config.outputs.system_name }} Pipeline"
     needs: [detect-changes, systems-config]
     if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.shared == 'true'
-    uses: ImplementSprint/central_workflow/.github/workflows/front-end-workflow.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/front-end-workflow.yml@main
     with:
       system-dir: ${{ needs.systems-config.outputs.working_dir }}
       system-name: ${{ needs.systems-config.outputs.system_name }}
@@ -149,7 +149,7 @@ jobs:
       github.ref == 'refs/heads/test' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true') &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/versioning.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/versioning.yml@main
     with:
       mode: test
 
@@ -164,7 +164,7 @@ jobs:
       github.ref == 'refs/heads/test' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.event_name != 'workflow_dispatch' || (github.event.inputs.run_deploy == 'true' && github.event.inputs.dry_run != 'true')) &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/vercel-deploy.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/vercel-deploy.yml@main
     with:
       working-directory: ${{ needs.systems-config.outputs.working_dir }}
       environment: preview
@@ -184,7 +184,7 @@ jobs:
       github.ref == 'refs/heads/uat' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.event_name != 'workflow_dispatch' || (github.event.inputs.run_deploy == 'true' && github.event.inputs.dry_run != 'true')) &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/vercel-deploy.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/vercel-deploy.yml@main
     with:
       working-directory: ${{ needs.systems-config.outputs.working_dir }}
       environment: preview
@@ -203,7 +203,7 @@ jobs:
       always() &&
       github.ref == 'refs/heads/uat' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (needs.deploy-uat.result == 'success' || needs.deploy-uat.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/selenium-e2e.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/selenium-e2e.yml@main
     with:
       # We pull these directly from the systems-config outputs instead of a matrix
       system-name: ${{ needs.systems-config.outputs.system_name }}
@@ -223,7 +223,7 @@ jobs:
       github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.event_name != 'workflow_dispatch' || (github.event.inputs.run_deploy == 'true' && github.event.inputs.dry_run != 'true')) &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/production-gate.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/production-gate.yml@main
     with:
       system-dir: ${{ needs.systems-config.outputs.working_dir }}
       app-type: web
@@ -236,7 +236,7 @@ jobs:
     name: "Prod — ${{ needs.systems-config.outputs.system_name }}"
     needs: [production-gate, systems-config]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_deploy == 'true' && github.event.inputs.dry_run != 'true'))
-    uses: ImplementSprint/central_workflow/.github/workflows/vercel-deploy.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/vercel-deploy.yml@main
     with:
       working-directory: ${{ needs.systems-config.outputs.working_dir }}
       environment: production
@@ -297,7 +297,7 @@ jobs:
       github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true') &&
       (needs.deploy-prod.result == 'success' || needs.deploy-prod.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/versioning.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/versioning.yml@main
     with:
       mode: main
 
@@ -308,7 +308,7 @@ jobs:
     name: "GHCR — ${{ needs.systems-config.outputs.system_name }}"
     needs: [version-main-release, systems-config]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_deploy == 'true' && github.event.inputs.dry_run != 'true'))
-    uses: ImplementSprint/central_workflow/.github/workflows/docker-build.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/docker-build.yml@main
     with:
       working-directory: ${{ needs.systems-config.outputs.working_dir }}
       image-name: ${{ needs.systems-config.outputs.image_name }}
@@ -330,7 +330,7 @@ jobs:
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       needs.version-test.result == 'success' &&
       (needs.deploy-test.result == 'success' || needs.deploy-test.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/promotion.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/promotion.yml@main
     with:
       pipeline-kind: single
       direction: test-to-uat
@@ -360,7 +360,7 @@ jobs:
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       (needs.deploy-uat.result == 'success' || needs.deploy-uat.result == 'skipped') &&
       (needs.selenium-e2e.result == 'success' || needs.selenium-e2e.result == 'skipped')
-    uses: ImplementSprint/central_workflow/.github/workflows/promotion.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/promotion.yml@main
     with:
       pipeline-kind: single
       direction: uat-to-main
@@ -383,7 +383,7 @@ jobs:
     name: "Pipeline Summary"
     needs: [frontend, systems-config, sonarcloud]
     if: always()
-    uses: ImplementSprint/central_workflow/.github/workflows/pipeline-summary.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/pipeline-summary.yml@main
     with:
       pipeline-kind: single
       system1-name: ${{ needs.systems-config.outputs.system_name }}
@@ -461,7 +461,7 @@ jobs:
     name: "Notify Pipeline Status"
     needs: [pipeline-summary, frontend, systems-config, deploy-test, deploy-uat, selenium-e2e, deploy-prod, sonarcloud] #auto-revert-on-failure]
     if: always()
-    uses: ImplementSprint/central_workflow/.github/workflows/notifications.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/notifications.yml@main
     with:
       status: ${{ (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') && 'success' || (needs.frontend.result == 'cancelled' && 'cancelled' || 'failure') }}
       system-dir: FE Single
