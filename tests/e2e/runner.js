@@ -3,7 +3,6 @@
 
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
-const fs = require('fs');
 
 async function runE2E() {
   const baseUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
