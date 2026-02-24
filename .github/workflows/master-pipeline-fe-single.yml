@@ -181,7 +181,7 @@ jobs:
       always() &&
       github.ref == 'refs/heads/uat' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (needs.deploy-uat.result == 'success' || needs.deploy-uat.result == 'skipped')
-    uses: ImplementSprint/CICD-Fe_Single/.github/workflows/selenium-e2e.yml@main
+    uses: ImplementSprint/Central-Template/.github/workflows/selenium-e2e.yml@main
     with:
       # We pull these directly from the systems-config outputs instead of a matrix
       system-name: ${{ needs.systems-config.outputs.system_name }}
