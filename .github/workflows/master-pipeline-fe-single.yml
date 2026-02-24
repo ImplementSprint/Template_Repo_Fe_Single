@@ -382,7 +382,7 @@ jobs:
   # ══════════════════════════════════════════════════════════════════
   pipeline-summary:
     name: "Pipeline Summary"
-    needs: [frontend, systems-config]
+    needs: [frontend, systems-config, sonarcloud]
     if: always()
     uses: ImplementSprint/Central-Template/.github/workflows/pipeline-summary.yml@main
     with:
@@ -460,7 +460,7 @@ jobs:
   # ══════════════════════════════════════════════════════════════════
   notify-pipeline:
     name: "Notify Pipeline Status"
-    needs: [pipeline-summary, frontend, systems-config, deploy-test, deploy-uat, selenium-e2e, deploy-prod,] #auto-revert-on-failure]
+    needs: [pipeline-summary, frontend, systems-config, deploy-test, deploy-uat, selenium-e2e, deploy-prod, sonarcloud] #auto-revert-on-failure]
     if: always()
     uses: ImplementSprint/Central-Template/.github/workflows/notifications.yml@main
     with:
