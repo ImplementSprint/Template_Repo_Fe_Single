@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "node tests/e2e/runner.js"
   },
   "dependencies": {
     "next": "16.1.6",
@@ -17,12 +18,13 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@vitest/coverage-v8": "^4.0.18",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "selenium-webdriver": "^4.41.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18"

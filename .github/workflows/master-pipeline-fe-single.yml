@@ -170,6 +170,25 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets[needs.systems-config.outputs.vercel_project_secret] }}
+      
+  # ══════════════════════════════════════════════════════════════════
+  # Selenium E2E Tests (UAT Only)
+  # ══════════════════════════════════════════════════════════════════
+  selenium-e2e:
+    name: "Selenium E2E — ${{ needs.systems-config.outputs.system_name }}"
+    needs: [deploy-uat, systems-config]
+    if: >-
+      always() &&
+      github.ref == 'refs/heads/uat' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.deploy-uat.result == 'success' || needs.deploy-uat.result == 'skipped')
+    uses: ImplementSprint/Central-Template/.github/workflows/selenium-e2e.yml@main
+    with:
+      # We pull these directly from the systems-config outputs instead of a matrix
+      system-name: ${{ needs.systems-config.outputs.system_name }}
+      working-directory: ${{ needs.systems-config.outputs.working_dir }}
+      run-only-on-branch: uat
+      # Optional: Pass the live Vercel UAT URL to Selenium
+      e2e-base-url: ${{ needs.deploy-uat.outputs.deployment_url }}
 
   # ══════════════════════════════════════════════════════════════════
   # Production Readiness Gate
@@ -311,13 +330,14 @@ jobs:
   # ══════════════════════════════════════════════════════════════════
   create-pr-to-main:
     name: "Create PR → Main"
-    needs: [frontend, deploy-uat, systems-config]
+    needs: [frontend, deploy-uat, selenium-e2e, systems-config]
     if: >-
       always() &&
       github.ref == 'refs/heads/uat' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.event_name != 'workflow_dispatch' || github.event.inputs.run_promotion == 'true') &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
-      (needs.deploy-uat.result == 'success' || needs.deploy-uat.result == 'skipped')
+      (needs.deploy-uat.result == 'success' || needs.deploy-uat.result == 'skipped') &&
+      (needs.selenium-e2e.result == 'success' || needs.selenium-e2e.result == 'skipped')
     uses: ImplementSprint/CICD-Fe_Single/.github/workflows/promotion.yml@main
     with:
       pipeline-kind: single
@@ -350,73 +370,74 @@ jobs:
   # ══════════════════════════════════════════════════════════════════
   # Auto Revert on Failure
   # ══════════════════════════════════════════════════════════════════
-  auto-revert-on-failure:
-    name: "Auto Revert on Failure"
-    needs:
-      [
-        systems-config,
-        frontend,
-        version-test,
-        deploy-test,
-        deploy-uat,
-        production-gate,
-        deploy-prod,
-        update-about-link,
-        version-main-release,
-        docker-main,
-        create-pr-to-uat,
-        create-pr-to-main,
-        pipeline-summary,
-      ]
-    if: >-
-      always() &&
-      github.event_name == 'push' &&
-      contains(needs.*.result, 'failure') &&
-      !contains(github.event.head_commit.message, '[skip-revert]') &&
-      !contains(github.event.head_commit.message, '[skip ci]') &&
-      !contains(github.event.head_commit.message, '[ci skip]') &&
-      !startsWith(github.event.head_commit.message, 'Revert "')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ github.token }}
+  #auto-revert-on-failure:
+  #  name: "Auto Revert on Failure"
+  #  needs:
+  #    [
+  #      systems-config,
+  #      frontend,
+  #      version-test,
+  #      deploy-test,
+  #      deploy-uat,
+  #       selenium-e2e,
+  #      production-gate,
+  #      deploy-prod,
+  #      update-about-link,
+  #      version-main-release,
+  #      docker-main,
+  #     create-pr-to-uat,
+  #      create-pr-to-main,
+  #      pipeline-summary,
+  #    ]
+  #  if: >-
+  #    always() &&
+  #    github.event_name == 'push' &&
+  #    contains(needs.*.result, 'failure') &&
+  #    !contains(github.event.head_commit.message, '[skip-revert]') &&
+  #    !contains(github.event.head_commit.message, '[skip ci]') &&
+  #    !contains(github.event.head_commit.message, '[ci skip]') &&
+  #    !startsWith(github.event.head_commit.message, 'Revert "')
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout Code
+  #      uses: actions/checkout@v4
+  #      with:
+  #        fetch-depth: 0
+  #        token: ${{ github.token }}
+  #
+  #    - name: Create rollback commit
+  #     env:
+  #        BRANCH_NAME: ${{ github.ref_name }}
+  #      run: |
+  #        git config user.name "github-actions[bot]"
+  #        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Create rollback commit
-        env:
-          BRANCH_NAME: ${{ github.ref_name }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+  #        git fetch origin "${BRANCH_NAME}" --depth=50
+  #        git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
 
-          git fetch origin "${BRANCH_NAME}" --depth=50
-          git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+  #        export GIT_EDITOR=:
 
-          export GIT_EDITOR=:
+  #        if git revert --no-edit "${GITHUB_SHA}"; then
+  #          git commit --amend -m "$(git log -1 --pretty=%B) [skip ci] [skip-revert]"
+  #          echo "✅ Created revert commit from ${GITHUB_SHA}."
+  #        elif git revert -m 1 --no-edit "${GITHUB_SHA}"; then
+  #          git commit --amend -m "$(git log -1 --pretty=%B) [skip ci] [skip-revert]"
+  #          echo "✅ Created merge-revert commit from ${GITHUB_SHA}."
+  #        else
+  #          git revert --abort || true
+  #          SHORT_SHA="${GITHUB_SHA:0:7}"
+  #          git commit --allow-empty -m "ci(auto-revert): manual rollback required for ${SHORT_SHA} [skip ci] [skip-revert]"
+  #          echo "⚠️ Automatic revert conflicted; created marker commit for manual rollback."
+  #        fi
 
-          if git revert --no-edit "${GITHUB_SHA}"; then
-            git commit --amend -m "$(git log -1 --pretty=%B) [skip ci] [skip-revert]"
-            echo "✅ Created revert commit from ${GITHUB_SHA}."
-          elif git revert -m 1 --no-edit "${GITHUB_SHA}"; then
-            git commit --amend -m "$(git log -1 --pretty=%B) [skip ci] [skip-revert]"
-            echo "✅ Created merge-revert commit from ${GITHUB_SHA}."
-          else
-            git revert --abort || true
-            SHORT_SHA="${GITHUB_SHA:0:7}"
-            git commit --allow-empty -m "ci(auto-revert): manual rollback required for ${SHORT_SHA} [skip ci] [skip-revert]"
-            echo "⚠️ Automatic revert conflicted; created marker commit for manual rollback."
-          fi
-
-          git push origin "HEAD:${BRANCH_NAME}"
+  #        git push origin "HEAD:${BRANCH_NAME}"
 
   # ══════════════════════════════════════════════════════════════════
   # Notify Pipeline Status
   # ══════════════════════════════════════════════════════════════════
   notify-pipeline:
     name: "Notify Pipeline Status"
-    needs: [pipeline-summary, frontend, systems-config, deploy-test, deploy-uat, deploy-prod, auto-revert-on-failure]
+    needs: [pipeline-summary, frontend, systems-config, deploy-test, deploy-uat, selenium-e2e, deploy-prod,] #auto-revert-on-failure]
     if: always()
     uses: ImplementSprint/CICD-Fe_Single/.github/workflows/notifications.yml@main
     with:
