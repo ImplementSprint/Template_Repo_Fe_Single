@@ -114,41 +114,14 @@ jobs:
       system-dir: ${{ needs.systems-config.outputs.working_dir }}
       system-name: ${{ needs.systems-config.outputs.system_name }}
       enable-security-scan: true
-      enable-sonar: false
     secrets: inherit
 
-  # ══════════════════════════════════════════════════════════════════
-  # SonarCloud Analysis
-  # ══════════════════════════════════════════════════════════════════
-  sonarcloud:
-    name: "SonarCloud Analysis"
-    needs: [frontend, systems-config]
-    if: always() && needs.frontend.result != 'cancelled' && fromJson(needs.active-systems.outputs.active_count) > 0
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-        with:
-          args: >
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-
-      
   # ══════════════════════════════════════════════════════════════════
   # Version Tag — TEST
   # ══════════════════════════════════════════════════════════════════
   version-test:
     name: "Version Tag — TEST"
-    needs: [frontend, sonarcloud]
+    needs: [frontend]
     if: >-
       always() &&
       github.ref == 'refs/heads/test' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
@@ -163,7 +136,7 @@ jobs:
   # ══════════════════════════════════════════════════════════════════
   deploy-test:
     name: "TEST — ${{ needs.systems-config.outputs.system_name }}"
-    needs: [frontend, systems-config, sonarcloud]
+    needs: [frontend, systems-config]
     if: >-
       always() &&
       github.ref == 'refs/heads/test' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
@@ -183,7 +156,7 @@ jobs:
   # ══════════════════════════════════════════════════════════════════
   deploy-uat:
     name: "UAT — ${{ needs.systems-config.outputs.system_name }}"
-    needs: [frontend, systems-config, sonarcloud]
+    needs: [frontend, systems-config]
     if: >-
       always() &&
       github.ref == 'refs/heads/uat' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
