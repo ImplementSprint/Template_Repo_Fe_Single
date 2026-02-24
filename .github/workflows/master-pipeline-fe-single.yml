@@ -115,29 +115,6 @@ jobs:
       system-name: ${{ needs.systems-config.outputs.system_name }}
       enable-security-scan: true
     secrets: inherit
-
-# ══════════════════════════════════════════════════════════════════
-  # SonarCloud Analysis
-  # ══════════════════════════════════════════════════════════════════
-  sonarcloud:
-    name: "SonarCloud Analysis"
-    needs: [frontend, systems-config]
-    # Fixed the condition to work for the single pipeline
-    if: always() && needs.frontend.result != 'cancelled'
-    # Make sure this path matches the exact filename of your reusable workflow
-    uses: ImplementSprint/Central-Template/.github/workflows/sonarcloud-scan.yml@main
-    with:
-      system-name: ${{ needs.systems-config.outputs.system_name }}
-      working-directory: ${{ needs.systems-config.outputs.working_dir }}
-      # Optional: You can pass these if your app structure differs from the defaults
-      # sources-path: "src" 
-      # tests-path: "tests"
-      # coverage-report-path: "coverage/lcov.info"
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
-
       
   # ══════════════════════════════════════════════════════════════════
   # Version Tag — TEST
