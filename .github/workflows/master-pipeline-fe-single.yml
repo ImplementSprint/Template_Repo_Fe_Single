@@ -123,15 +123,24 @@ jobs:
   sonarcloud:
     name: "SonarCloud Analysis"
     needs: [frontend, systems-config]
-    if: always() && needs.frontend.result != 'cancelled'
-    uses: ImplementSprint/Central-Template/.github/workflows/sonarcloud-scan.yml@main # <--- This runs your explicit outer scan
-    with:
-      system-name: ${{ needs.systems-config.outputs.system_name }}
-      working-directory: ${{ needs.systems-config.outputs.working_dir }}
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+    if: always() && needs.frontend.result != 'cancelled' && fromJson(needs.active-systems.outputs.active_count) > 0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
 
       
   # ══════════════════════════════════════════════════════════════════
