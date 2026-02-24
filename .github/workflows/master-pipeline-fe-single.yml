@@ -119,7 +119,7 @@ jobs:
   sonarcloud:
     name: "SonarCloud — Analysis"
     needs: [frontend, systems-config]
-    if: always() && needs.frontend.result != 'cancelled' && fromJson(needs.active-systems.outputs.active_count) > 0
+    if: always() && needs.frontend.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
